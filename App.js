@@ -13,15 +13,19 @@ export default function App() {
   const [temperature, setTemperature] = useState();
   const [humidity, setHumidity] = useState();
   const [illuminance, setIlluminance] = useState();
+  const [exp, setExp] = useState();
+  const [progress, setProgress] = useState(NaN);
+  const [lv,setLv]=useState();
   const database = getDatabase();
   const soilHumidityRef = ref(database, 'soilHumidity');
   const temperatureRef = ref(database, 'temperature');
   const humidityRef = ref(database, 'humidity');
   const illuminanceRef = ref(database, 'illuminance');
+  const expRef = ref(database, 'exp');
   useEffect(() => {
     onValue(soilHumidityRef, (snapshot) => {
       const data = snapshot.val();
-      setSoilHumidity(data);
+      setSoilHumidity((1023-data)/1023*100);
     })
     onValue(temperatureRef, (snapshot) => {
       const data = snapshot.val();
@@ -33,25 +37,33 @@ export default function App() {
     })
     onValue(illuminanceRef, (snapshot) => {
       const data = snapshot.val();
-      setIlluminance(data);
+      setIlluminance(Math.ceil((1023-data)/1023*100));
+    })
+    onValue(expRef, (snapshot) => {
+      const data = snapshot.val();
+      setExp(data);
+      setLv(Math.floor(data/1023));
     })
   })
   const [loaded] = useFonts({
     welcomeBold: require('./assets/fonts/welcomeBold.ttf'),
     welcomeRegular: require('./assets/fonts/welcomeRegular.ttf')
   });
-  if (!loaded) return null;
+  useEffect(()=>{
+    setProgress(((exp-(lv*1023))/1023).toFixed(2));
+  })
+  if (!loaded || progress=="NaN") return null;
   return (
     <View style={styles.container}>
       <View style={styles.case1}>
         <TouchableOpacity activeOpacity={0.5}>
-          <View style={styles.lvWrap}>
-            <Text style={styles.lv}>Lv.7</Text>
+          <View style={styles.lvWrap2}>
+            <Text style={styles.lv}>Lv.{lv}</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.5}>
-          <View style={styles.lvWrap}>
-            <Text style={styles.lv}>선인장</Text>
+          <View style={styles.lvWrap1}>
+            <Text style={styles.lv}>개나리자스민</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -59,30 +71,30 @@ export default function App() {
         <View style={styles.case2}>
           <Text style={styles.fontStyleOg, styles.textStatus}>식물이 건강하게{"\n"}자라고 있어요👍🏻</Text>
           <Image source={pot} style={styles.potImg} />
-          <Progress.Bar progress={0.7} width={200} />
-          <Text style={styles.fontStyleOg}>70%</Text>
+          <Progress.Bar progress={progress} width={200} />
+          <Text style={styles.fontStyleOg}>{progress*100}%</Text>
         </View>
       </TouchableOpacity>
       <View style={styles.case3} />
       <View style={styles.potDataWrapWrap}>
         <TouchableOpacity activeOpacity={0.5}>
           <View style={styles.potDataWrap}>
-            <Text style={styles.fontStyle}>🪴{soilHumidity}</Text>
+            <Text style={styles.fontStyle}>🪴{soilHumidity}%</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.5}>
           <View style={styles.potDataWrap}>
-            <Text style={styles.fontStyle}>🔥{temperature}</Text>
+            <Text style={styles.fontStyle}>🔥{temperature}°C</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.5}>
           <View style={styles.potDataWrap}>
-            <Text style={styles.fontStyle}>💧{humidity}</Text>
+            <Text style={styles.fontStyle}>💧{humidity}%</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.5}>
           <View style={styles.potDataWrap}>
-            <Text style={styles.fontStyle}>☀️{illuminance}</Text>
+            <Text style={styles.fontStyle}>☀️{illuminance}%</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -131,27 +143,31 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   case1: {
-    marginBottom: 25,
+    marginBottom: 5,
     flexDirection: 'row',
-    right:70,
+    right:100,
   },
-  lvWrap: {
+  lvWrap1: {
     marginTop: 65,
-    width: 100,
+    width: '100%',
     height: 50,
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
     backgroundColor: 'white',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 10,
-      height: 10,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    marginLeft: 10,
+    marginLeft:20,
+  },
+  lvWrap2: {
+    marginTop: 65,
+    width: '100%',
+    height: 50,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: 'white',
+    marginLeft:30,
   },
   lv: {
     fontSize: 25,
